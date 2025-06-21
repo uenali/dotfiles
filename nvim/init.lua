@@ -4,6 +4,8 @@
 -- Default functionality: 
 -- f2 to toggle tagbar
 -- f3 to toggle file tree
+-- f5 to trigger diagnostics dialog
+-- f6 to trigger hover information dialog
 -- ctrl+p for fuzzy finder (default)
 
 vim.cmd("syntax on")
@@ -68,12 +70,14 @@ inoremap <expr> > getline('.')[col('.')-1] == '>' ? "\<Right>" : ">"
 vim.opt.completeopt = 'menuone,noinsert'
 vim.opt.pumheight = 10 -- limit the number of autocomplete suggestions
 vim.cmd[[ 
-function! TriggerOmniComplete() " trigger after "." or multi character word
-	if !empty(&omnifunc) && 
-		\ getline('.')[col('.')-2] =~ '\w'&& 
-		\ getline('.')[col('.')-3] =~ '\w'||
-		\ getline('.')[col('.')-2] == '.'
-		call feedkeys("\<C-x>\<C-o>", 'n')
+function! TriggerOmniComplete() " trigger after "." or multi character word	
+	if &omnifunc != ""
+		if !empty(&omnifunc) && 
+			\ getline('.')[col('.')-2] =~ '\w'&& 
+			\ getline('.')[col('.')-3] =~ '\w'||
+			\ getline('.')[col('.')-2] == '.'
+			call feedkeys("\<C-x>\<C-o>", 'n')
+		endif
 	endif
 endfunction
 
@@ -87,21 +91,19 @@ set shortmess+=c " hide messages for completion/not found
 -- Autocomplete language configuration
 require("lspconfig").rust_analyzer.setup({})
 
--- Diagnostic information configuration 
-vim.o.updatetime = 200
-vim.api.nvim_create_autocmd("CursorHold", {
-	callback = function()
-		vim.diagnostic.open_float({focusable=false})
-	end
-})
+-- Open hover information
+vim.api.nvim_set_keymap(
+	'n', '<F6>', 
+	':lua vim.lsp.buf.hover({border="double",max_width=64,focusable=false})<CR>',
+	{noremap = true, silent = true}
+)
 
--- Diagnostic information window display settings 
-vim.diagnostic.config({
-	float = {
-		border = "single",
-		max_width = 64,
-	}
-})
+-- Open diagnostic information
+vim.api.nvim_set_keymap(
+	'n', '<F5>',
+	':lua vim.diagnostic.open_float({border="double",max_width=64,focusable=false})<CR>',
+	{noremap = true, silent = true}
+)
 
 -- Colour configuration, highlight hex codes in their colour 
 local function text_col(bg_col) 
@@ -127,7 +129,7 @@ vim.api.nvim_create_autocmd({'BufEnter', 'TextChanged', 'TextChangedI'}, {
 	end
 })
 
-vim.cmd("colorscheme uelani")
+vim.cmd("colorscheme uenali")
 
 -- Status bar configuration
 vim.cmd[[
